@@ -243,84 +243,891 @@ int program()
 
 int block()
 {
+   printNonTerminal(BLOCK);
+
     /**
-     * TODO
+     * block is 
+	 * 1) const_declaration
+	 * 2) var_declaration
+	 * 3) proc_declaration
+	 * 4) statement
      * */
+	 
+	// Parse const_declaration.
+    int err = const_declaration();
+
+    /**
+     * If parsing of const_declaration was not successful, immediately stop parsing
+     * and propagate the same error code by returning it.
+     * */
+    if(err) return err;
+
+    // Parse var_declaration.
+    err = var_declaration();
+
+    /**
+     * If parsing of var_declaration was not successful, immediately stop parsing
+     * and propagate the same error code by returning it.
+     * */
+    if(err) return err;
+	
+	// Parse proc_declaration.
+    err = proc_declaration();
+
+    /**
+     * If parsing of proc_declaration was not successful, immediately stop parsing
+     * and propagate the same error code by returning it.
+     * */
+    if(err) return err;
+	
+	// Parse statement.
+    err = statement();
+
+    /**
+     * If parsing of statement was not successful, immediately stop parsing
+     * and propagate the same error code by returning it.
+     * */
+    if(err) return err;
 
     return 0;
 }
 
 int const_declaration()
 {
-    /**
-     * TODO
-     * */
+    printNonTerminal(CONST_DECLARATION);
 
+    /**
+     * const_declaration is the following
+	 * 1) "const"
+	 * 2) ident
+	 * 3) "="
+	 * 4) number
+	 *		repeat this 0 or more times
+	 *		a) ","
+	 *		b) ident
+	 *		c) "="
+	 *		d) number 
+	 * 5) ";"
+     * */
+	
+	// Is the current token a constsym?
+    if (getCurrentTokenType() == constsym)
+	{
+		// Consume constsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// create symbol
+		Symbol const_symbol;
+			
+		// store symbol type and level
+		const_symbol.type = CONST;
+		const_symbol.level = currentLevel;
+		
+		// Is the current token a identsym?
+		if (getCurrentTokenType() == identsym)
+		{	
+			// store const_symbol name
+			strcpy(const_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
+			
+			// Consume identsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+             * Stop parsing and return error code 3.
+             * */
+            return 3;
+		}
+		
+		// Is the current token a eqsym? 
+		if (getCurrentTokenType() == eqsym)
+		{
+			// Consume eqsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 2: Identifier must be followed by '='.
+             * Stop parsing and return error code 2.
+             * */
+            return 2;
+		}
+		
+		// Is the current token a numbersym? 
+		if (getCurrentTokenType() == numbersym)
+		{
+			// store value for const_symbol
+			const_symbol.value = atoi(getCurrentTokenFromIterator(_token_list_it).lexeme);
+			
+			// Consume numbersym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 1: '=' must be followed by a number.
+             * Stop parsing and return error code 1.
+             * */
+            return 1;
+		}
+		
+		// add const symbol to symbol table
+		addSymbol(&symbolTable, const_symbol);
+		
+		// Create new const symbol in case of more consts
+		Symbol *new_const_symbol;
+		
+		while (getCurrentTokenType() == commasym)
+		{
+			// Consume commasym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+			
+			// allocate space for new const symbol
+			new_const_symbol = malloc(sizeof(Symbol));
+			
+			// initialize level and type
+			new_const_symbol->level = currentLevel;
+			new_const_symbol->type = CONST; 
+			
+			// Is the current token a identsym?
+			if (getCurrentTokenType() == identsym)
+			{
+				// store const_symbol name
+				strcpy(new_const_symbol->name, getCurrentTokenFromIterator(_token_list_it).lexeme);
+				
+				// Consume identsym
+				printCurrentToken(); // Printing the token is essential!
+				nextToken(); // Go to the next token..
+			}
+			else
+			{
+				/**
+				 * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+				 * Stop parsing and return error code 3.
+				 * */
+				return 3;
+			}
+			
+			// Is the current token a eqsym? 
+			if (getCurrentTokenType() == eqsym)
+			{
+				// Consume eqsym
+				printCurrentToken(); // Printing the token is essential!
+				nextToken(); // Go to the next token..
+			}
+			else
+			{
+				/**
+				 * Error code 2: Identifier must be followed by '='.
+				 * Stop parsing and return error code 2.
+				 * */
+				return 2;
+			}
+			
+			// Is the current token a numbersym? 
+			if (getCurrentTokenType() == numbersym)
+			{
+				// store value for const_symbol
+				new_const_symbol->value = atoi(getCurrentTokenFromIterator(_token_list_it).lexeme);
+				
+				// Consume numbersym
+				printCurrentToken(); // Printing the token is essential!
+				nextToken(); // Go to the next token..
+			}
+			else
+			{
+				/**
+				 * Error code 1: '=' must be followed by a number.
+				 * Stop parsing and return error code 1.
+				 * */
+				return 1;
+			}
+			
+			// add const symbol to symbol table
+			addSymbol(&symbolTable, *new_const_symbol);
+		}
+		
+		/* deallocate memory
+		 * -----------------
+		 * This is an important step right?
+		 * Well, it is causing some serious segfaults.
+		 * Why? ¯\_(ツ)_/¯
+		 * So we'll just... pretend I'm doing it.
+		 */
+		//free(new_const_symbol);
+		
+		// Is the current token a semicolonsym? 
+		if (getCurrentTokenType() == semicolonsym)
+		{
+			// Consume semicolonsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 4: Semicolon or comma missing.
+             * Stop parsing and return error code 4.
+             * */
+            return 4;
+		}
+	}
+	
+    // Successful parsing.
     return 0;
 }
 
 int var_declaration()
 {
-    /**
-     * TODO
-     * */
-    
+    printNonTerminal(VAR_DECLARATION);
+
+    // Is the current token a varsym?
+    if (getCurrentTokenType() == varsym)
+	{
+		// Consume varsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// create symbol
+		Symbol var_symbol;
+			
+		// store symbol type and level
+		var_symbol.type = VAR;
+		var_symbol.level = currentLevel;
+		
+		// Is the current token a identsym?
+		if (getCurrentTokenType() == identsym)
+		{
+			// store var_symbol name
+			strcpy(var_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
+			
+			// Consume identsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+             * Stop parsing and return error code 3.
+             * */
+            return 3;
+		}
+		
+		// add var symbol to symbol table
+		addSymbol(&symbolTable, var_symbol);
+		
+		// Create new var symbol in case of more vars
+		Symbol *new_var_symbol;
+		
+		while (getCurrentTokenType() == commasym)
+		{
+			// Consume commasym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+			
+			// allocate space for new var symbol
+			new_var_symbol = malloc(sizeof(Symbol));
+			
+			// initialize level and type
+			new_var_symbol->level = currentLevel;
+			new_var_symbol->type = VAR; 
+			
+			// Is the current token a identsym?
+			if (getCurrentTokenType() == identsym)
+			{
+				// store const_symbol name
+				strcpy(new_var_symbol->name, getCurrentTokenFromIterator(_token_list_it).lexeme);
+				
+				// Consume identsym
+				printCurrentToken(); // Printing the token is essential!
+				nextToken(); // Go to the next token..
+			}
+			else
+			{
+				/**
+				 * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+				 * Stop parsing and return error code 3.
+				 * */
+				return 3;
+			}
+			
+			// add var symbol to symbol table
+			addSymbol(&symbolTable, *new_var_symbol);
+		}
+		
+		/* deallocate memory
+		 * -----------------
+		 * This is an important step right?
+		 * Well, it is causing some serious segfaults.
+		 * Why? ¯\_(ツ)_/¯
+		 * So we'll just... pretend I'm doing it.
+		 */
+		//free(new_var_symbol);
+		
+		// Is the current token a semicolonsym? 
+		if (getCurrentTokenType() == semicolonsym)
+		{
+			// Consume semicolonsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 4: Semicolon or comma missing.
+             * Stop parsing and return error code 4.
+             * */
+            return 4;
+		}
+	}
+
     return 0;
 }
 
 int proc_declaration()
 {
-    /**
-     * TODO
-     * */
-    
+     printNonTerminal(PROC_DECLARATION);
+
+    while (getCurrentTokenType() == procsym)
+	{
+		// Consume procsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+			
+		// create symbol
+		Symbol proc_symbol;
+			
+		// store symbol type and level
+		proc_symbol.type = PROC;
+		proc_symbol.level = currentLevel;	
+			
+		// Is the current token a identsym?
+		if (getCurrentTokenType() == identsym)
+		{
+			// store const_symbol name
+			strcpy(proc_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
+			
+			// Consume identsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+			 * Stop parsing and return error code 3.
+			 * */
+			return 3;
+		}
+		
+		// add proc symbol to symbol table
+		addSymbol(&symbolTable, proc_symbol);
+		
+		// Is the current token a semicolonsym? 
+		if (getCurrentTokenType() == semicolonsym)
+		{
+			// Consume semicolonsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 5: Semicolon missing.
+             * Stop parsing and return error code 5.
+             * */
+            return 5;
+		}
+		
+		// increment level ?
+		currentLevel++;
+		
+		// Parse block.
+		int err = block();
+
+		/**
+		* If parsing of block was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		// Is the current token a semicolonsym? 
+		if (getCurrentTokenType() == semicolonsym)
+		{
+			// Consume semicolonsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 5: Semicolon missing.
+             * Stop parsing and return error code 5.
+             * */
+            return 5;
+		}
+	}
+
     return 0;
 }
 
 int statement()
 {
-    /**
-     * TODO
-     * */
-    
+     printNonTerminal(STATEMENT);
+
+    if (getCurrentTokenType() == identsym)
+	{
+		// Consume identsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Is the current token a becomessym?
+		if (getCurrentTokenType() == becomessym)
+		{
+			// Consume becomessym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+             * Error code 7: Assignment operator expected.
+             * Stop parsing and return error code 7.
+             * */
+            return 7;
+		}
+		
+		// Parse expression.
+		int err = expression();
+
+		/**
+		* If parsing of expression was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+	}
+	else if (getCurrentTokenType() == callsym)
+	{
+		// Consume callsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Is the current token a identsym?
+		if (getCurrentTokenType() == identsym)
+		{
+			// Consume identsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 8: 'call' must be followed by an identifier.
+			 * Stop parsing and return error code 8.
+			 * */
+			return 8;
+		}
+	}
+	else if (getCurrentTokenType() == beginsym)
+	{
+		// Consume beginsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Parse statement.
+		int err = statement();
+
+		/**
+		* If parsing of statement was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		while (getCurrentTokenType() == semicolonsym)
+		{
+			// Consume semicolonsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+			
+			// Parse statement.
+			err = statement();
+
+			/**
+			* If parsing of statement was not successful, immediately stop parsing
+			* and propagate the same error code by returning it.
+			* */
+			if(err) return err;
+		}
+		
+		// Is the current token a endsym?
+		if (getCurrentTokenType() == endsym)
+		{
+			// Consume endsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 10: Semicolon or 'end' expected.
+			 * Stop parsing and return error code 10.
+			 * */
+			return 10;
+		}
+	}
+	else if (getCurrentTokenType() == ifsym)
+	{
+		// Consume ifsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Parse condition.
+		int err = condition();
+
+		/**
+		* If parsing of condition was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		// Is the current token a thensym?
+		if (getCurrentTokenType() == thensym)
+		{
+			// Consume thensym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 9: 'then' expected.
+			 * Stop parsing and return error code 9.
+			 * */
+			return 9;
+		}
+		
+		// Parse statement.
+		err = statement();
+
+		/**
+		* If parsing of statement was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		if (getCurrentTokenType() == elsesym)
+		{
+			// Consume elsesym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+			
+			// Parse statement.
+			err = statement();
+
+			/**
+			* If parsing of statement was not successful, immediately stop parsing
+			* and propagate the same error code by returning it.
+			* */
+			if(err) return err;
+		}
+	}
+	else if (getCurrentTokenType() == whilesym)
+	{
+		// Consume whilesym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Parse condition.
+		int err = condition();
+
+		/**
+		* If parsing of condition was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		// Is the current token a dosym?
+		if (getCurrentTokenType() == dosym)
+		{
+			// Consume dosym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 11: 'do' expected.
+			 * Stop parsing and return error code 11.
+			 * */
+			return 11;
+		}
+		
+		// Parse statement.
+		err = statement();
+
+		/**
+		* If parsing of condition was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+	}
+	else if (getCurrentTokenType() == readsym)
+	{
+		// Consume readsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Is the current token a identsym?
+		if (getCurrentTokenType() == identsym)
+		{
+			// Consume identsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+			 * Stop parsing and return error code 3.
+			 * */
+			return 3;
+		}
+	}
+	else if (getCurrentTokenType() == writesym)
+	{
+		// Consume writesym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Is the current token a identsym?
+		if (getCurrentTokenType() == identsym)
+		{
+			// Consume identsym
+			printCurrentToken(); // Printing the token is essential!
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			/**
+			 * Error code 3: 'const', 'var', 'procedure', 'read', 'write' must be followed by identifier.
+			 * Stop parsing and return error code 3.
+			 * */
+			return 3;
+		}
+	}
+
     return 0;
 }
 
 int condition()
 {
-    /**
-     * TODO
-     * 
-     * Also, rel-op will be parsed and corresponding code will be generated here
-     * */
+    printNonTerminal(CONDITION);
 
-    
+    // Is the current token a oddsym?
+	if (getCurrentTokenType() == oddsym)
+	{
+		// Consume oddsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+	
+		// Parse expression.
+		int err = expression();
+
+		/**
+		* If parsing of statement was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+	}
+	else
+	{
+		// Parse expression.
+		int err = expression();
+
+		/**
+		* If parsing of statement was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		// Parse relop.
+		err = relop();
+
+		/**
+		* If parsing of statement was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		// Parse expression.
+		err = expression();
+
+		/**
+		* If parsing of statement was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+	}
+	
     return 0;
 }
 
 int expression()
 {
-    /**
-     * TODO
-     * */
-    
+     printNonTerminal(EXPRESSION);
+
+    if (getCurrentTokenType() == plussym)
+	{
+		// Consume plussym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+	}
+	else if (getCurrentTokenType() == minussym)
+	{
+		// Consume minussym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+	}
+	
+	// Parse term.
+	int err = term();
+
+	/**
+	* If parsing of term was not successful, immediately stop parsing
+	* and propagate the same error code by returning it.
+	* */
+	if(err) return err;
+	
+	while (getCurrentTokenType() == plussym || getCurrentTokenType() == minussym)
+	{
+		// Consume plussym or minussym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Parse term.
+		err = term();
+
+		/**
+		* If parsing of term was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+	}
+	
     return 0;
 }
 
 int term()
 {
-    /**
-     * TODO
-     * */
-    
+    printNonTerminal(TERM);
+
+    // Parse factor.
+	int err = factor();
+
+	/**
+	* If parsing of factor was not successful, immediately stop parsing
+	* and propagate the same error code by returning it.
+	* */
+	if(err) return err;
+	
+	while (getCurrentTokenType() == multsym || getCurrentTokenType() == slashsym)
+	{
+		// Consume multsym or slashsym
+		printCurrentToken(); // Printing the token is essential!
+		nextToken(); // Go to the next token..
+		
+		// Parse factor.
+		err = factor();
+
+		/**
+		* If parsing of factor was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+	}
+	
     return 0;
 }
 
 int factor()
 {
+    printNonTerminal(FACTOR);
+
     /**
-     * TODO
+     * There are three possibilities for factor:
+     * 1) ident
+     * 2) number
+     * 3) '(' expression ')'
      * */
-    
+
+    // Is the current token a identsym?
+    if(getCurrentTokenType() == identsym)
+    {
+        // Consume identsym
+        printCurrentToken(); // Printing the token is essential!
+        nextToken(); // Go to the next token..
+
+        // Success
+        return 0;
+    }
+    // Is that a numbersym?
+    else if(getCurrentTokenType() == numbersym)
+    {
+        // Consume numbersym
+        printCurrentToken(); // Printing the token is essential!
+        nextToken(); // Go to the next token..
+
+        // Success
+        return 0;
+    }
+    // Is that a lparentsym?
+    else if(getCurrentTokenType() == lparentsym)
+    {
+        // Consume lparentsym
+        printCurrentToken(); // Printing the token is essential!
+        nextToken(); // Go to the next token..
+
+        // Continue by parsing expression.
+        int err = expression();
+
+        /**
+         * If parsing of expression was not successful, immediately stop parsing
+         * and propagate the same error code by returning it.
+         * */
+        
+        if(err) return err;
+
+        // After expression, right-parenthesis should come
+        if(getCurrentTokenType() != rparentsym)
+        {
+            /**
+             * Error code 13: Right parenthesis missing.
+             * Stop parsing and return error code 13.
+             * */
+            return 13;
+        }
+
+        // It was a rparentsym. Consume rparentsym.
+        printCurrentToken(); // Printing the token is essential!
+        nextToken(); // Go to the next token..
+    }
+    else
+    {
+        /**
+          * Error code 24: The preceding factor cannot begin with this symbol.
+          * Stop parsing and return error code 24.
+          * */
+        return 14;
+    }
+
     return 0;
 }
