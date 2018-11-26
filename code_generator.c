@@ -243,8 +243,6 @@ int program()
 
 int block()
 {
-   printNonTerminal(BLOCK);
-
     /**
      * block is 
 	 * 1) const_declaration
@@ -294,8 +292,6 @@ int block()
 
 int const_declaration()
 {
-    printNonTerminal(CONST_DECLARATION);
-
     /**
      * const_declaration is the following
 	 * 1) "const"
@@ -487,8 +483,6 @@ int const_declaration()
 
 int var_declaration()
 {
-    printNonTerminal(VAR_DECLARATION);
-
     // Is the current token a varsym?
     if (getCurrentTokenType() == varsym)
 	{
@@ -595,8 +589,6 @@ int var_declaration()
 
 int proc_declaration()
 {
-     printNonTerminal(PROC_DECLARATION);
-
     while (getCurrentTokenType() == procsym)
 	{
 		// Consume procsym
@@ -682,8 +674,6 @@ int proc_declaration()
 
 int statement()
 {
-     printNonTerminal(STATEMENT);
-
     if (getCurrentTokenType() == identsym)
 	{
 		// Consume identsym
@@ -930,8 +920,6 @@ int statement()
 
 int condition()
 {
-    printNonTerminal(CONDITION);
-
     // Is the current token a oddsym?
 	if (getCurrentTokenType() == oddsym)
 	{
@@ -983,8 +971,6 @@ int condition()
 
 int expression()
 {
-     printNonTerminal(EXPRESSION);
-
     if (getCurrentTokenType() == plussym)
 	{
 		// Consume plussym
@@ -1028,8 +1014,6 @@ int expression()
 
 int term()
 {
-    printNonTerminal(TERM);
-
     // Parse factor.
 	int err = factor();
 
@@ -1060,8 +1044,6 @@ int term()
 
 int factor()
 {
-    printNonTerminal(FACTOR);
-
     /**
      * There are three possibilities for factor:
      * 1) ident
