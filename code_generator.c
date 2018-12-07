@@ -595,7 +595,10 @@ int proc_declaration()
 			
 		// create symbol
 		Symbol proc_symbol;
-			
+		
+		// set currentScope to new procedure
+		currentScope = &proc_symbol;
+		
 		// store symbol type and level
 		proc_symbol.type = PROC;
 		proc_symbol.level = currentLevel;	
@@ -1106,7 +1109,7 @@ int term()
 			// reset minus
 			multiply = 0;
 		
-			//emit(MUL, pushontostack, pop_again, pop);
+			//emit(MUL, push, pop_again, pop);
 		}
 		else if (divide)
 		{
@@ -1132,11 +1135,12 @@ int factor()
     // Is the current token a identsym?
     if(getCurrentTokenType() == identsym)
     {
-		// load ident
-		//emit(LOD, R, currentLevel, M);
-		
-		 // Consume identsym
+		// Consume identsym
         nextToken(); // Go to the next token..
+		
+		// load ident and increment current reg
+		//emit(LOD, currentReg, currentLevel, M);
+		//currentReg++;
 		
         // Success
         return 0;
@@ -1147,8 +1151,9 @@ int factor()
         // Consume numbersym
         nextToken(); // Go to the next token..
 
-		// emit literal
-		//emit(LIT, pushontostack, 0, M);
+		// load literal and increment current reg 
+		//emit(LIT, currentReg, 0, M);
+		//currentReg++;
 		
         // Success
         return 0;
