@@ -485,7 +485,6 @@ int var_declaration()
     if (getCurrentTokenType() == varsym)
 	{
 		// Consume varsym
-		//
 		nextToken(); // Go to the next token..
 		
 		// create symbol
@@ -502,7 +501,6 @@ int var_declaration()
 			strcpy(var_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 			
 			// Consume identsym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -514,6 +512,9 @@ int var_declaration()
             return 3;
 		}
 		
+		// allocate space for var
+		emit(INC, 0, 0, 2);
+		
 		// add var symbol to symbol table
 		addSymbol(&symbolTable, var_symbol);
 		
@@ -523,7 +524,6 @@ int var_declaration()
 		while (getCurrentTokenType() == commasym)
 		{
 			// Consume commasym
-			//
 			nextToken(); // Go to the next token..
 			
 			// allocate space for new var symbol
@@ -540,7 +540,6 @@ int var_declaration()
 				strcpy(new_var_symbol->name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 				
 				// Consume identsym
-				//
 				nextToken(); // Go to the next token..
 			}
 			else
@@ -551,6 +550,9 @@ int var_declaration()
 				 * */
 				return 3;
 			}
+			
+			// allocate space for var
+			emit(INC, 0, 0, 2);
 			
 			// add var symbol to symbol table
 			addSymbol(&symbolTable, *new_var_symbol);
@@ -649,6 +651,9 @@ int proc_declaration()
 		jumpRef= nextCodeIndex;
 		emit(JMP, 0, 0, 0);
 		
+		// make space for SL, DL, etc.
+		emit(INC, 0, 0, 4);
+		
 		// Parse block.
 		int err = block();
 
@@ -716,19 +721,21 @@ int statement()
 		if(err) return err;
 		
 		// store result of expression
-		//emit(STO, popOffStack, currentLevel, M)
+		emit(STO, currentReg, currentLevel, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
+		currentReg--;
 	}
 	else if (getCurrentTokenType() == callsym)
 	{
 		// Consume callsym
-		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
+			// emit call
+			emit(CAL, 0, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address, 4);
+			
 			// Consume identsym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -743,7 +750,6 @@ int statement()
 	else if (getCurrentTokenType() == beginsym)
 	{
 		// Consume beginsym
-		//
 		nextToken(); // Go to the next token..
 		
 		// Parse statement.
@@ -790,7 +796,6 @@ int statement()
 	else if (getCurrentTokenType() == ifsym)
 	{
 		// Consume ifsym
-		//
 		nextToken(); // Go to the next token..
 		
 		// Parse condition.
@@ -937,7 +942,6 @@ int condition()
 	if (getCurrentTokenType() == oddsym)
 	{
 		// Consume oddsym
-		//
 		nextToken(); // Go to the next token..
 	
 		// Parse expression.
