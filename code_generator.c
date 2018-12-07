@@ -589,8 +589,9 @@ int proc_declaration()
 {
     while (getCurrentTokenType() == procsym)
 	{
+		int jumpRef;
+		
 		// Consume procsym
-		//
 		nextToken(); // Go to the next token..
 			
 		// create symbol
@@ -644,18 +645,24 @@ int proc_declaration()
 		// increment level before block
 		currentLevel++;
 		
+		// store reference to jmp emit so we can go back after block and update
+		jumpRef= nextCodeIndex;
+		emit(JMP, 0, 0, 0);
+		
 		// Parse block.
 		int err = block();
-		
-		// decrement level after block
-		currentLevel--;
-
 
 		/**
 		* If parsing of block was not successful, immediately stop parsing
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
+		
+		// decrement level after block
+		currentLevel--;
+		
+		// fix jump emit from before to skip over block
+		vmCode[jumpRef].m = nextCodeIndex;
 		
 		// Is the current token a semicolonsym? 
 		if (getCurrentTokenType() == semicolonsym)
