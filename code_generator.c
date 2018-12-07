@@ -322,7 +322,7 @@ int const_declaration()
 		if (getCurrentTokenType() == identsym)
 		{	
 			// store const_symbol name
-			strcpy(const_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
+			strcpy(const_symbol.name, getCurrentToken().lexeme);
 			
 			// Consume identsym
 			//
@@ -1020,14 +1020,18 @@ int expression()
 		// reset minus
 		minus = 0;
 		
-		//emit(SUB, pushontostack, pop_again, pop);
+		// SUB
+		emit(SUB, currentReg - 1, currentReg - 1, currentReg);
+		currentReg--;
 	}
 	else if (plus)
 	{
 		// reset plus
 		plus = 0;
 		
-		//emit(ADD, pushontostack, pop_again, pop);
+		// ADD
+		emit(ADD, currentReg - 1, currentReg - 1, currentReg);
+		currentReg--;
 	}
 	
 	while (getCurrentTokenType() == plussym || getCurrentTokenType() == minussym)
@@ -1060,14 +1064,18 @@ int expression()
 			// reset minus
 			minus = 0;
 		
-			//emit(SUB, pushontostack, pop_again, pop);
+			// SUB
+			emit(SUB, currentReg - 1, currentReg - 1, currentReg);
+			currentReg--;
 		}
 		else if (plus)
 		{
 			// reset plus
 			plus = 0;
-		
-			//emit(ADD, pushontostack, pop_again, pop);
+			
+			// ADD
+			emit(ADD, currentReg - 1, currentReg - 1, currentReg);
+			currentReg--;
 		}
 	}
 	
@@ -1114,17 +1122,21 @@ int term()
 		
 		if (multiply)
 		{
-			// reset minus
+			// reset multiply
 			multiply = 0;
 		
-			//emit(MUL, push, pop_again, pop);
+			// multiply
+			emit(MUL, currentReg - 1, currentReg - 1, currentReg);
+			currentReg--;
 		}
 		else if (divide)
 		{
 			// reset plus
 			divide = 0;
-		
-			//emit(DIV, pushontostack, pop_again, pop);
+			
+			// divide
+			emit(DIV, currentReg - 1, currentReg - 1, currentReg);
+			currentReg--;
 		}
 	}
 	
@@ -1143,12 +1155,12 @@ int factor()
     // Is the current token a identsym?
     if(getCurrentTokenType() == identsym)
     {
+		// load ident and increment current reg
+		currentReg++;
+		emit(LOD, currentReg, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
+		
 		// Consume identsym
         nextToken(); // Go to the next token..
-		
-		// load ident and increment current reg
-		//emit(LOD, currentReg, currentLevel, M);
-		//currentReg++;
 		
         // Success
         return 0;
@@ -1156,12 +1168,12 @@ int factor()
     // Is that a numbersym?
     else if(getCurrentTokenType() == numbersym)
     {
-        // Consume numbersym
-        nextToken(); // Go to the next token..
-
 		// load literal and increment current reg 
-		//emit(LIT, currentReg, 0, M);
-		//currentReg++;
+		currentReg++;
+		emit(LIT, currentReg, 0, atoi( getCurrentToken().lexeme ) );
+		
+		// Consume numbersym
+        nextToken(); // Go to the next token..
 		
         // Success
         return 0;
@@ -1170,7 +1182,6 @@ int factor()
     else if(getCurrentTokenType() == lparentsym)
     {
         // Consume lparentsym
-        //
         nextToken(); // Go to the next token..
 
         // Continue by parsing expression.
