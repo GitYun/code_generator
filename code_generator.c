@@ -309,8 +309,6 @@ int const_declaration()
 	// Is the current token a constsym?
     if (getCurrentTokenType() == constsym)
 	{
-		// Consume constsym
-		printCurrentToken(); // Printing the token is essential!
 		nextToken(); // Go to the next token..
 		
 		// create symbol
@@ -327,7 +325,7 @@ int const_declaration()
 			strcpy(const_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 			
 			// Consume identsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -343,7 +341,7 @@ int const_declaration()
 		if (getCurrentTokenType() == eqsym)
 		{
 			// Consume eqsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -362,7 +360,7 @@ int const_declaration()
 			const_symbol.value = atoi(getCurrentTokenFromIterator(_token_list_it).lexeme);
 			
 			// Consume numbersym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -383,7 +381,7 @@ int const_declaration()
 		while (getCurrentTokenType() == commasym)
 		{
 			// Consume commasym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 			
 			// allocate space for new const symbol
@@ -400,7 +398,7 @@ int const_declaration()
 				strcpy(new_const_symbol->name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 				
 				// Consume identsym
-				printCurrentToken(); // Printing the token is essential!
+				//
 				nextToken(); // Go to the next token..
 			}
 			else
@@ -416,7 +414,7 @@ int const_declaration()
 			if (getCurrentTokenType() == eqsym)
 			{
 				// Consume eqsym
-				printCurrentToken(); // Printing the token is essential!
+				//
 				nextToken(); // Go to the next token..
 			}
 			else
@@ -435,7 +433,7 @@ int const_declaration()
 				new_const_symbol->value = atoi(getCurrentTokenFromIterator(_token_list_it).lexeme);
 				
 				// Consume numbersym
-				printCurrentToken(); // Printing the token is essential!
+				//
 				nextToken(); // Go to the next token..
 			}
 			else
@@ -464,7 +462,7 @@ int const_declaration()
 		if (getCurrentTokenType() == semicolonsym)
 		{
 			// Consume semicolonsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -487,7 +485,7 @@ int var_declaration()
     if (getCurrentTokenType() == varsym)
 	{
 		// Consume varsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// create symbol
@@ -504,7 +502,7 @@ int var_declaration()
 			strcpy(var_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 			
 			// Consume identsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -525,7 +523,7 @@ int var_declaration()
 		while (getCurrentTokenType() == commasym)
 		{
 			// Consume commasym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 			
 			// allocate space for new var symbol
@@ -542,7 +540,7 @@ int var_declaration()
 				strcpy(new_var_symbol->name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 				
 				// Consume identsym
-				printCurrentToken(); // Printing the token is essential!
+				//
 				nextToken(); // Go to the next token..
 			}
 			else
@@ -571,7 +569,7 @@ int var_declaration()
 		if (getCurrentTokenType() == semicolonsym)
 		{
 			// Consume semicolonsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -592,7 +590,7 @@ int proc_declaration()
     while (getCurrentTokenType() == procsym)
 	{
 		// Consume procsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 			
 		// create symbol
@@ -609,7 +607,7 @@ int proc_declaration()
 			strcpy(proc_symbol.name, getCurrentTokenFromIterator(_token_list_it).lexeme);
 			
 			// Consume identsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -628,7 +626,7 @@ int proc_declaration()
 		if (getCurrentTokenType() == semicolonsym)
 		{
 			// Consume semicolonsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -640,11 +638,15 @@ int proc_declaration()
             return 5;
 		}
 		
-		// increment level ?
+		// increment level before block
 		currentLevel++;
 		
 		// Parse block.
 		int err = block();
+		
+		// decrement level after block
+		currentLevel--;
+
 
 		/**
 		* If parsing of block was not successful, immediately stop parsing
@@ -656,7 +658,7 @@ int proc_declaration()
 		if (getCurrentTokenType() == semicolonsym)
 		{
 			// Consume semicolonsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -677,14 +679,14 @@ int statement()
     if (getCurrentTokenType() == identsym)
 	{
 		// Consume identsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a becomessym?
 		if (getCurrentTokenType() == becomessym)
 		{
 			// Consume becomessym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -708,14 +710,14 @@ int statement()
 	else if (getCurrentTokenType() == callsym)
 	{
 		// Consume callsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
 			// Consume identsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -730,7 +732,7 @@ int statement()
 	else if (getCurrentTokenType() == beginsym)
 	{
 		// Consume beginsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Parse statement.
@@ -745,7 +747,7 @@ int statement()
 		while (getCurrentTokenType() == semicolonsym)
 		{
 			// Consume semicolonsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 			
 			// Parse statement.
@@ -762,7 +764,7 @@ int statement()
 		if (getCurrentTokenType() == endsym)
 		{
 			// Consume endsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -777,7 +779,7 @@ int statement()
 	else if (getCurrentTokenType() == ifsym)
 	{
 		// Consume ifsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Parse condition.
@@ -793,7 +795,7 @@ int statement()
 		if (getCurrentTokenType() == thensym)
 		{
 			// Consume thensym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -817,7 +819,7 @@ int statement()
 		if (getCurrentTokenType() == elsesym)
 		{
 			// Consume elsesym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 			
 			// Parse statement.
@@ -833,7 +835,7 @@ int statement()
 	else if (getCurrentTokenType() == whilesym)
 	{
 		// Consume whilesym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Parse condition.
@@ -849,7 +851,7 @@ int statement()
 		if (getCurrentTokenType() == dosym)
 		{
 			// Consume dosym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -873,14 +875,14 @@ int statement()
 	else if (getCurrentTokenType() == readsym)
 	{
 		// Consume readsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
 			// Consume identsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -895,14 +897,14 @@ int statement()
 	else if (getCurrentTokenType() == writesym)
 	{
 		// Consume writesym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
 			// Consume identsym
-			printCurrentToken(); // Printing the token is essential!
+			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -924,7 +926,7 @@ int condition()
 	if (getCurrentTokenType() == oddsym)
 	{
 		// Consume oddsym
-		printCurrentToken(); // Printing the token is essential!
+		//
 		nextToken(); // Go to the next token..
 	
 		// Parse expression.
@@ -948,7 +950,7 @@ int condition()
 		if(err) return err;
 		
 		// Parse relop.
-		err = relop();
+		//err = relop();
 
 		/**
 		* If parsing of statement was not successful, immediately stop parsing
@@ -971,42 +973,91 @@ int condition()
 
 int expression()
 {
+	// plus or minus
+	int plus = 0;
+	int minus = 0;
+	
     if (getCurrentTokenType() == plussym)
 	{
 		// Consume plussym
-		printCurrentToken(); // Printing the token is essential!
-		nextToken(); // Go to the next token..
+		nextToken();
+		
+		// set plus to true 
+		plus = 1;
 	}
 	else if (getCurrentTokenType() == minussym)
 	{
 		// Consume minussym
-		printCurrentToken(); // Printing the token is essential!
-		nextToken(); // Go to the next token..
+		nextToken();
+	
+		// set minus to true 
+		minus = 1;
 	}
 	
 	// Parse term.
 	int err = term();
-
+	
 	/**
 	* If parsing of term was not successful, immediately stop parsing
 	* and propagate the same error code by returning it.
 	* */
 	if(err) return err;
 	
+	// if there was a '+' or '-' before term
+	if (minus)
+	{
+		// reset minus
+		minus = 0;
+		
+		//emit(SUB, pushontostack, pop_again, pop);
+	}
+	else if (plus)
+	{
+		// reset plus
+		plus = 0;
+		
+		//emit(ADD, pushontostack, pop_again, pop);
+	}
+	
 	while (getCurrentTokenType() == plussym || getCurrentTokenType() == minussym)
 	{
+		if (getCurrentTokenType() == plussym)
+		{
+			// set plus to true 
+			plus = 1;
+		}
+		else if (getCurrentTokenType() == minussym)
+		{
+			// set minus to true 
+			minus = 1;
+		}
+		
 		// Consume plussym or minussym
-		printCurrentToken(); // Printing the token is essential!
-		nextToken(); // Go to the next token..
+		nextToken();
 		
 		// Parse term.
 		err = term();
-
+		
 		/**
 		* If parsing of term was not successful, immediately stop parsing
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
+	
+		if (minus)
+		{
+			// reset minus
+			minus = 0;
+		
+			//emit(SUB, pushontostack, pop_again, pop);
+		}
+		else if (plus)
+		{
+			// reset plus
+			plus = 0;
+		
+			//emit(ADD, pushontostack, pop_again, pop);
+		}
 	}
 	
     return 0;
@@ -1014,6 +1065,8 @@ int expression()
 
 int term()
 {
+	int divide = 0, multiply = 0;
+	
     // Parse factor.
 	int err = factor();
 
@@ -1025,9 +1078,19 @@ int term()
 	
 	while (getCurrentTokenType() == multsym || getCurrentTokenType() == slashsym)
 	{
+		if (getCurrentTokenType() == multsym)
+		{
+			// set plus to true 
+			multiply = 1;
+		}
+		else if (getCurrentTokenType() == slashsym)
+		{
+			// set minus to true 
+			divide = 1;
+		}
+		
 		// Consume multsym or slashsym
-		printCurrentToken(); // Printing the token is essential!
-		nextToken(); // Go to the next token..
+		nextToken();
 		
 		// Parse factor.
 		err = factor();
@@ -1037,6 +1100,21 @@ int term()
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
+		
+		if (multiply)
+		{
+			// reset minus
+			multiply = 0;
+		
+			//emit(MUL, pushontostack, pop_again, pop);
+		}
+		else if (divide)
+		{
+			// reset plus
+			divide = 0;
+		
+			//emit(DIV, pushontostack, pop_again, pop);
+		}
 	}
 	
     return 0;
@@ -1054,10 +1132,12 @@ int factor()
     // Is the current token a identsym?
     if(getCurrentTokenType() == identsym)
     {
-        // Consume identsym
-        printCurrentToken(); // Printing the token is essential!
+		// load ident
+		//emit(LOD, R, currentLevel, M);
+		
+		 // Consume identsym
         nextToken(); // Go to the next token..
-
+		
         // Success
         return 0;
     }
@@ -1065,9 +1145,11 @@ int factor()
     else if(getCurrentTokenType() == numbersym)
     {
         // Consume numbersym
-        printCurrentToken(); // Printing the token is essential!
         nextToken(); // Go to the next token..
 
+		// emit literal
+		//emit(LIT, pushontostack, 0, M);
+		
         // Success
         return 0;
     }
@@ -1075,7 +1157,7 @@ int factor()
     else if(getCurrentTokenType() == lparentsym)
     {
         // Consume lparentsym
-        printCurrentToken(); // Printing the token is essential!
+        //
         nextToken(); // Go to the next token..
 
         // Continue by parsing expression.
@@ -1099,7 +1181,7 @@ int factor()
         }
 
         // It was a rparentsym. Consume rparentsym.
-        printCurrentToken(); // Printing the token is essential!
+        //
         nextToken(); // Go to the next token..
     }
     else
