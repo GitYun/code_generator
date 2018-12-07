@@ -682,14 +682,12 @@ int statement()
     if (getCurrentTokenType() == identsym)
 	{
 		// Consume identsym
-		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a becomessym?
 		if (getCurrentTokenType() == becomessym)
 		{
 			// Consume becomessym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -709,6 +707,9 @@ int statement()
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
+		
+		// store result of expression
+		//emit(STO, popOffStack, currentLevel, M)
 	}
 	else if (getCurrentTokenType() == callsym)
 	{
