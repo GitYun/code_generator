@@ -781,7 +781,6 @@ int statement()
 		if (getCurrentTokenType() == endsym)
 		{
 			// Consume endsym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -792,6 +791,9 @@ int statement()
 			 * */
 			return 10;
 		}
+		
+		// return from procedure
+		emit(RTN, 0, 0, 0);
 	}
 	else if (getCurrentTokenType() == ifsym)
 	{
@@ -913,7 +915,6 @@ int statement()
 	else if (getCurrentTokenType() == writesym)
 	{
 		// Consume writesym
-		//
 		nextToken(); // Go to the next token..
 		
 		// Is the current token a identsym?
@@ -964,6 +965,11 @@ int condition()
 		* */
 		if(err) return err;
 		
+		/*
+		Notice that relop() function that was used in your parser is removed in code generator.
+		The reason is that it is easier to generate code for relational operations once 
+		both the condition and relop is parsed inside the function condition().
+		*/
 		// Parse relop.
 		//err = relop();
 
