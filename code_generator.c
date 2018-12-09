@@ -1051,8 +1051,8 @@ int condition()
 		}
 		else if (getCurrentTokenType() == gtrsym)
 		{
-			// emit GRT
-			emit(GRT, currentReg-1, currentReg-1, currentReg);
+			// emit GTR
+			emit(GTR, currentReg-1, currentReg-1, currentReg);
 			currentReg--;
 			
 			nextToken(); // Go to the next token..
@@ -1072,7 +1072,7 @@ int condition()
 		}
 		
 		// Parse expression.
-		int err = expression();
+		err = expression();
 
 		/**
 		* If parsing of expression was not successful, immediately stop parsing
@@ -1107,7 +1107,7 @@ int expression()
 		
 		// Parse term.
 		int err = term();
-		*/
+		
 		
 		/**
 		* If parsing of term was not successful, immediately stop parsing
@@ -1129,7 +1129,6 @@ int expression()
 	{
 		// Parse term.
 		int err = term();
-		*/
 		
 		/**
 		* If parsing of term was not successful, immediately stop parsing
@@ -1155,7 +1154,7 @@ int expression()
 		nextToken();
 		
 		// Parse term.
-		err = term();
+		int err = term();
 		
 		/**
 		* If parsing of term was not successful, immediately stop parsing
