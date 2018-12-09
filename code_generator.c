@@ -145,6 +145,19 @@ int emit(int OP, int R, int L, int M)
     return nextCodeIndex++;
 }
 
+// finds level for STO and LOD functions
+int findLevel(int foundSymbol)
+{
+	if ( currentLevel - findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level < 0 )
+	{
+		return 0;
+	}
+	else
+	{
+		return currentLevel - findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level;
+	}
+}
+
 void printEmittedCodes()
 {
     for(int i = 0; i < nextCodeIndex; i++)
@@ -433,7 +446,6 @@ int const_declaration()
 				new_const_symbol->value = atoi(getCurrentTokenFromIterator(_token_list_it).lexeme);
 				
 				// Consume numbersym
-				//
 				nextToken(); // Go to the next token..
 			}
 			else
@@ -691,8 +703,20 @@ int proc_declaration()
 
 int statement()
 {
+	int jpcRef;
+	
     if (getCurrentTokenType() == identsym)
 	{
+		// type != var
+		if (findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->type != VAR)
+		{
+			/**
+             * Error code 16: Assignment to constant or procedure is not allowed.
+             * Stop parsing and return error code 16.
+             * */
+            return 16;
+		}
+		
 		// Consume identsym
 		nextToken(); // Go to the next token..
 		
@@ -721,7 +745,8 @@ int statement()
 		if(err) return err;
 		
 		// store result of expression
-		emit(STO, currentReg, currentLevel, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
+		emit(STO, currentReg, findLevel(findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level),
+		findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
 		currentReg--;
 	}
 	else if (getCurrentTokenType() == callsym)
@@ -732,9 +757,19 @@ int statement()
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
-			// emit call
-			emit(CAL, 0, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address, 4);
-			
+			if (findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->type == PROC)
+			{
+				// emit call
+				emit(CAL, 0, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address, 4);
+			}
+			else
+			{
+				/**
+				 * Error code 17: Call of a constant or variable is not allowed.
+				 * Stop parsing and return error code 17.
+				 * */
+				return 7;
+			}
 			// Consume identsym
 			nextToken(); // Go to the next token..
 		}
@@ -764,7 +799,6 @@ int statement()
 		while (getCurrentTokenType() == semicolonsym)
 		{
 			// Consume semicolonsym
-			//
 			nextToken(); // Go to the next token..
 			
 			// Parse statement.
@@ -791,9 +825,6 @@ int statement()
 			 * */
 			return 10;
 		}
-		
-		// return from procedure
-		emit(RTN, 0, 0, 0);
 	}
 	else if (getCurrentTokenType() == ifsym)
 	{
@@ -813,7 +844,6 @@ int statement()
 		if (getCurrentTokenType() == thensym)
 		{
 			// Consume thensym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -824,6 +854,10 @@ int statement()
 			 * */
 			return 9;
 		}
+		
+		// JPC
+		jpcRef= nextCodeIndex;
+		emit(JPC, currentReg, 0, 0); 
 		
 		// Parse statement.
 		err = statement();
@@ -837,7 +871,6 @@ int statement()
 		if (getCurrentTokenType() == elsesym)
 		{
 			// Consume elsesym
-			//
 			nextToken(); // Go to the next token..
 			
 			// Parse statement.
@@ -849,11 +882,12 @@ int statement()
 			* */
 			if(err) return err;
 		}
+		// update JPC
+		vmCode[jpcRef].m = nextCodeIndex;
 	}
 	else if (getCurrentTokenType() == whilesym)
 	{
 		// Consume whilesym
-		//
 		nextToken(); // Go to the next token..
 		
 		// Parse condition.
@@ -865,11 +899,14 @@ int statement()
 		* */
 		if(err) return err;
 		
+		// JPC
+		jpcRef = nextCodeIndex;
+		emit(JPC, currentReg, 0, 0); 
+		
 		// Is the current token a dosym?
 		if (getCurrentTokenType() == dosym)
 		{
 			// Consume dosym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -889,18 +926,27 @@ int statement()
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
+		
+		// update JPC
+		vmCode[jpcRef].m = nextCodeIndex;
 	}
 	else if (getCurrentTokenType() == readsym)
 	{
 		// Consume readsym
-		//
 		nextToken(); // Go to the next token..
+		
+		// SIO_READ
+		emit(SIO_READ, currentReg, 0, 2);
 		
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
+			// emit STO
+			emit(STO, currentReg, findLevel(findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level),
+			findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
+			currentReg--;
+			
 			// Consume identsym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -920,8 +966,10 @@ int statement()
 		// Is the current token a identsym?
 		if (getCurrentTokenType() == identsym)
 		{
+			// SIO_WRITE
+			emit(SIO_WRITE, currentReg, 0, 1);
+			
 			// Consume identsym
-			//
 			nextToken(); // Go to the next token..
 		}
 		else
@@ -949,10 +997,14 @@ int condition()
 		int err = expression();
 
 		/**
-		* If parsing of statement was not successful, immediately stop parsing
+		* If parsing of expression was not successful, immediately stop parsing
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
+
+		// ODD
+		emit(ODD, currentReg-1, currentReg-1, currentReg);
+		currentReg--;
 	}
 	else
 	{
@@ -960,35 +1012,74 @@ int condition()
 		int err = expression();
 
 		/**
-		* If parsing of statement was not successful, immediately stop parsing
+		* If parsing of expression was not successful, immediately stop parsing
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
 		
-		/*
-		Notice that relop() function that was used in your parser is removed in code generator.
-		The reason is that it is easier to generate code for relational operations once 
-		both the condition and relop is parsed inside the function condition().
-		*/
-		// Parse relop.
-		//err = relop();
-
-		/**
-		* If parsing of statement was not successful, immediately stop parsing
-		* and propagate the same error code by returning it.
-		* */
-		if(err) return err;
+		if (getCurrentTokenType() == eqsym)
+		{
+			// emit EQL
+			emit(EQL, currentReg-1, currentReg-1, currentReg);
+			currentReg--;
+			
+			nextToken(); // Go to the next token..	
+		}
+		else if (getCurrentTokenType() == neqsym)
+		{
+			// emit NEQ
+			emit(NEQ, currentReg-1, currentReg-1, currentReg);
+			currentReg--;
+			
+			nextToken(); // Go to the next token..
+		}
+		else if (getCurrentTokenType() == lessym)
+		{
+			// emit LSS
+			emit(LSS, currentReg-1, currentReg-1, currentReg);
+			currentReg--;
+			
+			nextToken(); // Go to the next token..
+		}
+		else if (getCurrentTokenType() == leqsym)
+		{
+			// emit LEQ
+			emit(LEQ, currentReg-1, currentReg-1, currentReg);
+			currentReg--;
+			
+			nextToken(); // Go to the next token..
+		}
+		else if (getCurrentTokenType() == gtrsym)
+		{
+			// emit GRT
+			emit(GRT, currentReg-1, currentReg-1, currentReg);
+			currentReg--;
+			
+			nextToken(); // Go to the next token..
+		}
+		else if (getCurrentTokenType() == geqsym)
+		{
+			// emit GEQ
+			emit(GEQ, currentReg-1, currentReg-1, currentReg);
+			currentReg--;
+			
+			nextToken(); // Go to the next token..
+		}
+		else
+		{
+			// Relational operator expected
+			return (12);
+		}
 		
 		// Parse expression.
-		err = expression();
+		int err = expression();
 
 		/**
-		* If parsing of statement was not successful, immediately stop parsing
+		* If parsing of expression was not successful, immediately stop parsing
 		* and propagate the same error code by returning it.
 		* */
 		if(err) return err;
 	}
-	
     return 0;
 }
 
@@ -998,50 +1089,53 @@ int expression()
 	int plus = 0;
 	int minus = 0;
 	
-    if (getCurrentTokenType() == plussym)
+	if (getCurrentTokenType() == plussym || getCurrentTokenType() == minussym)
 	{
-		// Consume plussym
-		nextToken();
+		if (getCurrentTokenType() == plussym)
+		{
+			// Consume plussym
+			nextToken();
+		}
+		else if (getCurrentTokenType() == minussym)
+		{
+			// Consume minussym
+			nextToken();
 		
-		// set plus to true 
-		plus = 1;
-	}
-	else if (getCurrentTokenType() == minussym)
-	{
-		// Consume minussym
-		nextToken();
-	
-		// set minus to true 
-		minus = 1;
-	}
-	
-	// Parse term.
-	int err = term();
-	
-	/**
-	* If parsing of term was not successful, immediately stop parsing
-	* and propagate the same error code by returning it.
-	* */
-	if(err) return err;
-	
-	// if there was a '+' or '-' before term
-	if (minus)
-	{
-		// reset minus
-		minus = 0;
+			// set minus to true 
+			minus = 1;
+		}
 		
-		// SUB
-		emit(SUB, currentReg - 1, currentReg - 1, currentReg);
-		currentReg--;
-	}
-	else if (plus)
-	{
-		// reset plus
-		plus = 0;
+		// Parse term.
+		int err = term();
+		*/
 		
-		// ADD
-		emit(ADD, currentReg - 1, currentReg - 1, currentReg);
-		currentReg--;
+		/**
+		* If parsing of term was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
+		
+		if (minus)
+		{
+			// emit NEG
+			emit(NEG, currentReg - 1, currentReg - 1, currentReg);
+			currentReg--;
+			
+			// reset minus indicator
+			minus = 0;
+		}
+	} 
+	else
+	{
+		// Parse term.
+		int err = term();
+		*/
+		
+		/**
+		* If parsing of term was not successful, immediately stop parsing
+		* and propagate the same error code by returning it.
+		* */
+		if(err) return err;
 	}
 	
 	while (getCurrentTokenType() == plussym || getCurrentTokenType() == minussym)
@@ -1088,7 +1182,6 @@ int expression()
 			currentReg--;
 		}
 	}
-	
     return 0;
 }
 
@@ -1166,8 +1259,9 @@ int factor()
     if(getCurrentTokenType() == identsym)
     {
 		// load ident and increment current reg
+		emit(LOD, currentReg, findLevel(findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level),
+		findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
 		currentReg++;
-		emit(LOD, currentReg, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->level, findSymbol( &symbolTable, currentScope, getCurrentToken().lexeme )->address);
 		
 		// Consume identsym
         nextToken(); // Go to the next token..
@@ -1179,8 +1273,8 @@ int factor()
     else if(getCurrentTokenType() == numbersym)
     {
 		// load literal and increment current reg 
-		currentReg++;
 		emit(LIT, currentReg, 0, atoi( getCurrentToken().lexeme ) );
+		currentReg++;
 		
 		// Consume numbersym
         nextToken(); // Go to the next token..
